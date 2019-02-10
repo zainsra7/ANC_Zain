@@ -68,15 +68,16 @@ public class Node {
         this.buffer_routing.set(destination, previousNode);
     }
     
-    public boolean updateRoutingTable(List<Integer> srcDistanceVector, List<Integer> srcRoutingVector, int srcId){
+    public boolean updateRoutingTable(List<Integer> srcDistanceVector, List<Integer> srcRoutingVector, int srcId, boolean splitHorizon){
         boolean learnedNewPath = false;
         for(int i=1; i< distance_vector.size(); i++){
-            if(i == id || i == srcId || srcDistanceVector.get(i) == -1)
+            if(i == id || i == srcId || srcDistanceVector.get(i) == -1 || (splitHorizon && srcRoutingVector.get(i) == id))
                 continue;
+            
             int distanceFromNeighbour = srcDistanceVector.get(i) + distance_vector.get(srcId);
             //If the distance to reach a particular node from neighbour is less than the current distance
             //then update your distance vector and routing vector with shortest cost and outlink
-            if(distanceFromNeighbour < distance_vector.get(i) || distance_vector.get(i) == -1){
+            if(distanceFromNeighbour < distance_vector.get(i) || distance_vector.get(i) == -1 || (routing_vector.get(i) == srcId && distanceFromNeighbour != distance_vector.get(i))){ //I added the last routing_vector.get(i) == srcId so that if you get a new value from neighbour just update it then
                 learnedNewPath = true;
                 updateDistanceBuffer(i, distanceFromNeighbour);
                 if(routing_vector.get(srcId) == id)
@@ -110,7 +111,16 @@ public class Node {
     public void setList_of_neighbours(List<Integer> list_of_neighbours) {
         this.list_of_neighbours = list_of_neighbours;
     }
-
+    
+    public void crashNode(){
+         distance_vector.clear();
+         routing_vector.clear();
+         list_of_neighbours.clear();
+    }
+    public void neighbourCrash(int neighbourId){
+        distance_vector.set(neighbourId, -1);
+        routing_vector.set(neighbourId, -1);
+    }
     
     public void bufferToActual(){
         //It's an O(n) operation, where n is the number of nodes
