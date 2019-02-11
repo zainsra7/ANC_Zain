@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Iteration class containing its id and list of all nodes in that iteration.
  * @author Zain
  */
 public class Iteration {
@@ -21,8 +21,8 @@ public class Iteration {
     
     @Override
     public String toString(){
-        String result = "\n \t\t\t /////////// Iteration# "+ number+" ///////////\n";
-        result += "\t\t\t\t TotalNodes: "+ (nodes.size() - 1)+"\n";
+        String result = "\n\t///////////////////// Iteration# "+ number+" /////////////////////////\n";
+        result += "\t TotalNodes: "+ (nodes.size() - 1)+"\n";
         for (int i =1 ; i < nodes.size(); i++){
             result += nodes.get(i).toString();
         }

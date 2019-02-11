@@ -9,11 +9,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JTextArea;
 
 /**
- *
+ * Main class which contains normal/slow convergence logic, along-with updating/storing state of network and communicating with GUI.
  * @author Zain
  */
 public class Networks {
@@ -22,13 +21,21 @@ public class Networks {
     public static List<Node> nodes; //Nodes for current Iteration/State
     public static int totalNodes;
     public static int totalIterations;
+    public static boolean stopNetwork;
+    public static Interface it;
 
     //Fields for Slow-Converge (Count to Infitinity)
     public static int crashIteration; //Iteration on which the node will be crashed
     public static int crashNode; //Node to Crash
 
-    public static void bellmanFordAlgorithm(boolean normalConvergence, boolean splitHorizon) {
-        boolean learnedNewPaths = false;
+    public static void setup() {
+        iterations = new ArrayList<>();
+        nodes = new ArrayList<>();
+    }
+
+    public static void bellmanFordAlgorithm(JTextArea screen) {
+        it.writeToScreen(iterations.get(0).toString()); //Write the initializing Iteration to the screen
+        boolean learnedNewPaths;
         boolean convergeEarly = false;
         while (!convergeEarly) {
             convergeEarly = true;
@@ -49,142 +56,52 @@ public class Networks {
                 nodes.get(i).bufferToActual();
             }
             Iteration itr = new Iteration(++totalIterations, nodes, totalNodes + 1);
-            //System.out.println(itr.toString());
             iterations.add(itr);
+            it.writeToScreen(itr.toString());
         }
     }
 
-    public static void slowConvergence(boolean splitHorizon) {
-        boolean learnedNewPaths = false;
+    public static void slowConvergence(boolean splitHorizon, int stopIteration) {
+        it.writeToScreen(iterations.get(0).toString());
+        boolean learnedNewPaths;
         boolean convergeEarly = false;
         while (!convergeEarly) {
             convergeEarly = true;
             for (int i = 1; i < nodes.size(); i++) {
                 Node source = nodes.get(i); //Current Node
-               if(!(totalIterations + 1 == crashIteration && source.getID() == crashNode)){ 
-                List<Integer> sourceNeighbours = source.getList_of_neighbours(); //All Neighbours of Current Nodes  
-                for (int j = 0; j < sourceNeighbours.size(); j++) {
-                     //Update each neighbours routing table
+                if (!(totalIterations + 1 == crashIteration && source.getID() == crashNode)) {
+                    List<Integer> sourceNeighbours = source.getList_of_neighbours(); //All Neighbours of Current Nodes  
+                    for (int j = 0; j < sourceNeighbours.size(); j++) {
+                        //Update each neighbours routing table
                         int neighbourId = sourceNeighbours.get(j);
                         learnedNewPaths = nodes.get(neighbourId).updateRoutingTable(source.getDistance_vector(), source.getRouting_vector(), source.getID(), splitHorizon);
                         if (learnedNewPaths) {
                             convergeEarly = false; //It means that routing table of some node changed, so we can't converge and need to continue
                         }
                     }
-               }
+                }
             }
             //Copy Buffer to Actual Vectors for each node (For Simultaneuosly transfer of routing tables)
             for (int i = 1; i < nodes.size(); i++) {
                 nodes.get(i).bufferToActual();
             }
-
             if (totalIterations + 1 == crashIteration) {
-                    List<Integer> crashSourceNeighbours = nodes.get(crashNode).getList_of_neighbours(); //All Neighbours of crashed Node
-                  for(int x=0; x< crashSourceNeighbours.size(); x++){
+                List<Integer> crashSourceNeighbours = nodes.get(crashNode).getList_of_neighbours(); //All Neighbours of crashed Node
+                for (int x = 0; x < crashSourceNeighbours.size(); x++) {
                     nodes.get(crashSourceNeighbours.get(x)).neighbourCrash(crashNode); //Neighbour will update it's routing and distance vector with -1
-                  }
-                   nodes.get(crashNode).crashNode(); //Clearing the node's distance, routing vector alongwith neighbour list
-                    convergeEarly = false;
                 }
-            
+                nodes.get(crashNode).crashNode(); //Clearing the node's distance, routing vector alongwith neighbour list
+                convergeEarly = false;
+            }
+
             Iteration itr = new Iteration(++totalIterations, nodes, totalNodes + 1);
-            //System.out.println(itr.toString());
             iterations.add(itr);
-                                for (int i = 0;  totalIterations == 10 && i < iterations.size(); i++) {
-                        System.out.println(iterations.get(i).toString());
-                    }
-            
-        }
-    }
-
-    public static void main(String[] args) {
-        iterations = new ArrayList<>();
-        nodes = new ArrayList<>();
-        /*
-        Read File--
-        TotalNumberOfNodes: 6
-        NodeA -- Distance/Cost -- NodeB
-        1 -- 3 -- 2 //It means that Node1 is connected to Node 2 and the cost of the bidirectional - link (n1-n2) is 3
-        1 -- 6 -- 3
-        1 -- 1 -- 5
-        2 -- 1 -- 4
-        2 -- 3 -- 5
-        3 -- 3 -- 5
-        3 -- 1 -- 6
-        4 -- 1 -- 5
-        5 -- 2 -- 6
-         */
-
-        //Display Menu and check for options
-        menuDisplay();
-        int choice = -1; //User choice from menu
-        Scanner reader = new Scanner(System.in);
-        boolean run = true;
-
-        while (run) {
-            choice = reader.nextInt();
-            switch (choice) {
-                case 1:
-                    System.out.println("Enter the Filename: ");
-                    String filename = reader.next();
-                    readNetworkFile(filename);
-
-                    bellmanFordAlgorithm(true, false);
-
-                    //Printing all iterations after convergence
-                    for (int i = 0; i < iterations.size(); i++) {
-                        System.out.println(iterations.get(i).toString());
-                    }
-                    break;
-                case 2:
-                    System.out.println("Enter the Filename: ");
-                    filename = reader.next();
-                    readSNetworkFile(filename);
-                    slowConvergence(true);
-                    //Printing all iterations after convergence
-                    for (int i = 0; i < iterations.size(); i++) {
-                        System.out.println(iterations.get(i).toString());
-                    }
-                    break;
-                case 3:
-                    System.out.println("Enter the Filename: ");
-                    filename = reader.next();
-                    readSNetworkFile(filename);
-                    slowConvergence(false);
-                    break;
-                case 4:
-                    if (iterations.isEmpty()) {
-                        System.out.println("Create a Network first using Option 1 or 2");
-                    } else {
-                        int iteration_num = -1;
-                        do {
-                            System.out.println("Total# of Iterations: [0-" + (iterations.size() - 1) + "]\nEnter Valid Iteration#: ");
-                            iteration_num = reader.nextInt();
-                        } while (iteration_num < 0 || iteration_num >= iterations.size());
-                        System.out.println(iterations.get(iteration_num).toString());
-                    }
-                    break;
-                case 5:
-                    if (iterations.isEmpty()) {
-                        System.out.println("Create a Network first using Option 1 or 2");
-                    } else {
-                        System.out.println("Enter the Filename: ");
-                        filename = reader.next();
-                        writeToFile(filename);
-                    }
-                    break;
-                case 6:
-                    run = false;
-                    break;
-            }
-            if (run != false) {
-                menuDisplay();
+            it.writeToScreen(itr.toString());
+            if(!splitHorizon && totalIterations == stopIteration){
+                convergeEarly = true;
             }
         }
-
-        System.out.println("Thank you for using this program! @zainsra.com");
     }
-
     //Function to insert a node in nodes List
     public static void addNode(int sourceNode, int destinationNode, int linkCost) {
         nodes.get(sourceNode).addNeighbours(destinationNode);
@@ -196,20 +113,10 @@ public class Networks {
         nodes.get(destinationNode).updateDistanceVector(sourceNode, linkCost);
         nodes.get(destinationNode).updateRoutingVector(sourceNode, destinationNode);
     }
-
-    public static void menuDisplay() {
-        System.out.println("-- Welcome to Zain's Network --\n\n Please choose one of the options to proceed (1-5): ");
-        System.out.println("\t\t 1. Normal Convergence ");
-        System.out.println("\t\t 2. Slow Convergence with Split");
-        System.out.println("\t\t 3. Slow Convergence without Split");
-        System.out.println("\t\t 4. Check an Iteration");
-        System.out.println("\t\t 5. Output Network State to File");
-        System.out.println("\t\t 6. Exit");
-    }
-
+    
     //Function to read input file in case of normal convergence
-    public static void readNetworkFile(String filename) {
-
+    public static String readNetworkFile(String filename) {
+        String message = "";
         //File format should be
         //1. First line showing Total Number of Nodes
         //2. Consecutive lines follows the pattern: SourceNode -- LinkCost -- DestinationNode
@@ -217,6 +124,7 @@ public class Networks {
         Scanner scanner;
         try {
             scanner = new Scanner(path);
+            nodes.clear();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (!line.contains("--")) {
@@ -233,20 +141,21 @@ public class Networks {
                     addNode(sourceNode, destinationNode, linkCost);
                 }
             }
-            //Clear Iterations from previous (normal/slow convergence run)
+            //Clear Iterations and nodes from previous (normal/slow convergence run)
             iterations.clear();
             totalIterations = 0;
             //Initial Iteration -- Containing Initial State of the Network
             Iteration it = new Iteration(totalIterations, nodes, totalNodes + 1);
             iterations.add(it);
         } catch (IOException ex) {
-            Logger.getLogger(Networks.class.getName()).log(Level.SEVERE, null, ex);
+            message = "File Not Found!";
         }
+        return message;
     }
 
     //Function to read input file in case of slow convergence
-    public static void readSNetworkFile(String filename) {
-
+    public static String readSNetworkFile(String filename) {
+        String message = "";
         //File format should be
         //1. First line showing Total Number of Nodes
         //2. Consecutive lines follows the pattern: SourceNode -- LinkCost -- DestinationNode 
@@ -256,6 +165,7 @@ public class Networks {
         Scanner scanner;
         try {
             scanner = new Scanner(path);
+            nodes.clear();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] tokenizer;
@@ -289,11 +199,13 @@ public class Networks {
             Iteration it = new Iteration(totalIterations, nodes, totalNodes + 1);
             iterations.add(it);
         } catch (IOException ex) {
-            Logger.getLogger(Networks.class.getName()).log(Level.SEVERE, null, ex);
+            message = "File Not Found!";
         }
+        return message;
     }
 
-    public static void writeToFile(String filename) {
+    public static String writeToFile(String filename) {
+        String message = "";
         try {
             PrintWriter fout = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
             for (int i = 0; i < iterations.size(); i++) {
@@ -303,15 +215,32 @@ public class Networks {
             fout.flush();
             fout.close();
         } catch (IOException ex) {
-            Logger.getLogger(Networks.class.getName()).log(Level.SEVERE, null, ex);
+            message = "Couldn't write to "+ filename + ". Try Again!";
         }
+        return message;
 
     }
 
     public static void initializeNodeArray() {
+        boolean addNodes = false;
+        if (nodes.isEmpty()) {
+            addNodes = true;
+        }
         for (int i = 0; i < totalNodes + 1; i++) {
             Node temp = new Node(i, totalNodes + 1);
-            nodes.add(temp);
+            if (addNodes) {
+                nodes.add(temp);
+            } else {
+                nodes.set(i, temp);
+            }
         }
+    }
+
+   public static void printIteration(int itrNumber){
+       it.writeToScreen(iterations.get(itrNumber).toString());
+   }
+    
+    public static void main(String[] args) {
+        it = new Interface();
     }
 }

@@ -1,7 +1,7 @@
 package network;
 import java.util.*;
 /**
- *
+ * Node class containing its id, routing table and list of neighbours.
  * @author Zain
  */
 public class Node {
@@ -138,17 +138,17 @@ public class Node {
    @Override
     public String toString(){
         
-        String result = "\n \t\t\t -- Node# " + id + ": Routing Table --\n\t\t\t Neighbours -> [";
+        String result = "\n \t -- Node# " + id + ": Routing Table --\n\t Neighbours -> [";
         for(int x =0; x < list_of_neighbours.size(); x++){
             result += "" + (list_of_neighbours.get(x)) + ",";
         }
-        result += "]\n\t\t   ----------------------------------------\n";
+        result += "]\n\t----------------------------------------\n";
         
         for(int i=1; i<distance_vector.size(); i++){
             if(distance_vector.get(i) == -1){
-            result+= "\t\t\t D: " + i + " || C: " + distance_vector.get(i)  + " || L: " + id+" -> "+routing_vector.get(i) + "\n";
+            result+= "\t D: " + i + " || C: " + distance_vector.get(i)  + " || L: " + id+" -> "+routing_vector.get(i) + "\n";
             }
-            else result+= "\t\t\t D: " + i + " || C: " + distance_vector.get(i)  + "  || L: " + id +" -> "+ routing_vector.get(i) + "\n"; 
+            else result+= "\t D: " + i + " || C: " + distance_vector.get(i)  + "  || L: " + id +" -> "+ routing_vector.get(i) + "\n"; 
         }
         result+= "\n";
         return result;
