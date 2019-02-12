@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+
 /**
  *
  * @author Zain
@@ -39,6 +40,7 @@ public class Interface extends JFrame implements ActionListener {
         setLocation(550, 200);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); //Disabling Exit Button of the main window
+        setResizable(false);
 
         //Setting Buttons
         buttons = new JPanel();
@@ -48,7 +50,7 @@ public class Interface extends JFrame implements ActionListener {
         slowConBtn = new JButton("Slow Convergence");
         outputBtn = new JButton("Write Output");
         exitBtn = new JButton("Exit");
-        
+
         outputBtn.setEnabled(false);
         checkItrBtn.setEnabled(false);
 
@@ -152,19 +154,22 @@ public class Interface extends JFrame implements ActionListener {
 
         } else if (e.getSource() == outputBtn) {
             String filename = getFilename();
-            String message = Networks.writeToFile(filename);
 
-            if (message.equals("")) {
-                JOptionPane.showMessageDialog(null, "Check " + filename + " for Output!", "Output Message", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, message, "Output Message", JOptionPane.ERROR_MESSAGE);
+            if (filename != null) {
+                String message = Networks.writeToFile(filename);
+
+                if (message.equals("")) {
+                    JOptionPane.showMessageDialog(null, "Check " + filename + " for Output!", "Output Message", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(null, message, "Output Message", JOptionPane.ERROR_MESSAGE);
+                }
             }
 
         } else if (e.getSource() == exitBtn) {
             int result = JOptionPane.showConfirmDialog(null, "Do you want to Exit the Program?");
 
             if (result == JOptionPane.YES_OPTION) {
-                String message = "Thank you for using this program!";
+                String message = "Thanks for using Zain's Network | @zainsra.com!";
                 JOptionPane.showMessageDialog(null, message, "Message", JOptionPane.INFORMATION_MESSAGE);
                 System.exit(0);
             }
@@ -191,7 +196,7 @@ public class Interface extends JFrame implements ActionListener {
     }
 
     private String getStopItertion() {
-        return JOptionPane.showInputDialog(this, "As this is an infinity problem, Please enter the max number of iterations", "Iterations Needed", JOptionPane.INFORMATION_MESSAGE);
+        return JOptionPane.showInputDialog(this, "As this is a count to infinity problem, Please enter the max number of iterations", "Iterations Needed", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private String getCheckItertion() {

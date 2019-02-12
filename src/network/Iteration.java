@@ -22,7 +22,7 @@ public class Iteration {
     @Override
     public String toString(){
         String result = "\n\t///////////////////// Iteration# "+ number+" /////////////////////////\n";
-        result += "\t TotalNodes: "+ (nodes.size() - 1)+"\n";
+        result += "\t       TotalNodes: "+ (nodes.size() - 1)+"\n";
         for (int i =1 ; i < nodes.size(); i++){
             result += nodes.get(i).toString();
         }

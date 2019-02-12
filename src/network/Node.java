@@ -71,15 +71,34 @@ public class Node {
     public boolean updateRoutingTable(List<Integer> srcDistanceVector, List<Integer> srcRoutingVector, int srcId, boolean splitHorizon){
         boolean learnedNewPath = false;
         for(int i=1; i< distance_vector.size(); i++){
+            //Let's say i is Node 1 and Node 3 is "this" and Node 2 is the neighbour sending its "srcDistanceVector" and "srcRoutingVector".
+            
+            //If SplitHorizon is on and the cost/link to reach Node 1 is -1 for Node 2, and Node 3 learned about Node 1 from Node 2 then update Node 3 cost to reach
+            //Node 1 as -1
+            //So if a new path comes to reach Node 1, then Node 3 will be able to update its routing table
+            if(splitHorizon && srcDistanceVector.get(i) == -1 && srcRoutingVector.get(i) == -1 && routing_vector.get(i) == srcId){
+                updateRoutingVector(i, -1);
+                updateDistanceVector(i, -1);
+                continue;
+            }
+            //1.Skip this iteration if current Node to process is Node3 or Node2. Because we already know the cost/link to these nodes. OR
+            //2.Skip this iteration if the cost to reach Node 1 is -1 for Node 2 (and we know from above "if" that Node 3 didn't learn the path to Node 1 from Node 2) OR
+            //3.Skip this iteration if splitHorizon is on and Node 2 learned about Node 1 from Node 3. (This is done to stop count to infinity problem)
             if(i == id || i == srcId || srcDistanceVector.get(i) == -1 || (splitHorizon && srcRoutingVector.get(i) == id))
                 continue;
             
+            //Cost to Node 1 = Cost to Node 1 from Node 2 + Cost to Node 2 from Node 3
             int distanceFromNeighbour = srcDistanceVector.get(i) + distance_vector.get(srcId);
-            //If the distance to reach a particular node from neighbour is less than the current distance
-            //then update your distance vector and routing vector with shortest cost and outlink
+            
+            //Update Node 3 routing table if:
+            //1. Cost to Node 1 is less than already known Cost OR
+            //2. Node 3 doesn't know about the cost to Node 1 yet (-1)
+            //3. Node 3 learned about the cost to Node 1 from Node 2 AND it's an updated cost value than already known
+
             if(distanceFromNeighbour < distance_vector.get(i) || distance_vector.get(i) == -1 || (routing_vector.get(i) == srcId && distanceFromNeighbour != distance_vector.get(i))){ //I added the last routing_vector.get(i) == srcId so that if you get a new value from neighbour just update it then
                 learnedNewPath = true;
                 updateDistanceBuffer(i, distanceFromNeighbour);
+                //If link to reach Node 2 from Node 3 is Node 3 i.e closest neighbour.
                 if(routing_vector.get(srcId) == id)
                     updateRoutingBuffer(i, srcId); // 2->4 for the node between 2 and 6, closest node to the current
                 else updateRoutingBuffer(i, routing_vector.get(srcId));
@@ -112,11 +131,13 @@ public class Node {
         this.list_of_neighbours = list_of_neighbours;
     }
     
+    //Crash (this) node, meaning to clear it's distance,routing vector alongwith list of neighbours
     public void crashNode(){
          distance_vector.clear();
          routing_vector.clear();
          list_of_neighbours.clear();
     }
+    //inform the nrighbour (this) of your crash
     public void neighbourCrash(int neighbourId){
         distance_vector.set(neighbourId, -1);
         routing_vector.set(neighbourId, -1);
@@ -138,17 +159,17 @@ public class Node {
    @Override
     public String toString(){
         
-        String result = "\n \t -- Node# " + id + ": Routing Table --\n\t Neighbours -> [";
+        String result = "\n \t       -- Node# " + id + ": Routing Table --\n\t       Neighbours -> [";
         for(int x =0; x < list_of_neighbours.size(); x++){
             result += "" + (list_of_neighbours.get(x)) + ",";
         }
-        result += "]\n\t----------------------------------------\n";
+        result += "]\n\t      -------------------------------\n";
         
         for(int i=1; i<distance_vector.size(); i++){
             if(distance_vector.get(i) == -1){
-            result+= "\t D: " + i + " || C: " + distance_vector.get(i)  + " || L: " + id+" -> "+routing_vector.get(i) + "\n";
+            result+= "\t       D: " + i + " || C: " + distance_vector.get(i)  + " || L: " + id+" -> "+routing_vector.get(i) + "\n";
             }
-            else result+= "\t D: " + i + " || C: " + distance_vector.get(i)  + "  || L: " + id +" -> "+ routing_vector.get(i) + "\n"; 
+            else result+= "\t       D: " + i + " || C: " + distance_vector.get(i)  + "  || L: " + id +" -> "+ routing_vector.get(i) + "\n"; 
         }
         result+= "\n";
         return result;
